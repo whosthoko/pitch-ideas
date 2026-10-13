@@ -12,7 +12,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'visual' | 'simulator' | 'zk-studio' | 'architecture'>('visual');
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="min-h-screen bg-[#FAFAFA] text-zinc-900 flex flex-col font-sans selection:bg-zinc-900 selection:text-white">
       {/* Institutional Top Header */}
       <Navbar
         currentProject={currentProject}
@@ -22,7 +22,7 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
         {currentProject === 'commodities' ? (
           <div>
             {activeTab === 'visual' && <AgenticCommoditiesVisual />}
@@ -38,29 +38,22 @@ export function App() {
         )}
       </main>
 
-      {/* Institutional Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-8 text-xs font-mono text-slate-400">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-slate-300 font-semibold">Agentic Commodities Protocol v2.4</span>
-            <span>•</span>
-            <span>Zero-Knowledge OTC Clearing</span>
+      {/* Minimalist Footer */}
+      <footer className="border-t border-zinc-200 bg-white py-6 text-xs text-zinc-500">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-zinc-700 font-medium">Agentic Commodities Protocol</span>
+            <span className="text-zinc-300">•</span>
+            <span className="text-zinc-400">Zero-Knowledge OTC Physical Clearing</span>
           </div>
 
-          <div className="flex items-center space-x-6 text-[11px]">
-            <span className="flex items-center space-x-1.5 text-slate-400">
-              <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Nitro Enclaves Active</span>
-            </span>
-            <span className="flex items-center space-x-1.5 text-slate-400">
-              <Lock className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Groth16 / Halo2 Verified</span>
-            </span>
-            <span className="flex items-center space-x-1.5 text-slate-400">
-              <Shield className="w-3.5 h-3.5 text-amber-400" />
-              <span>ISDA/EFET Legal Integration</span>
-            </span>
+          <div className="flex items-center space-x-4 text-[11px] text-zinc-400">
+            <span>Confidential Enclaves</span>
+            <span>•</span>
+            <span>Groth16 / Halo2 Circuits</span>
+            <span>•</span>
+            <span>ISDA / EFET Legal Escrow</span>
           </div>
         </div>
       </footer>
