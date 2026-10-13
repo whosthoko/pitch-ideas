@@ -369,14 +369,14 @@ export const VirtualWorldsVisual: React.FC = () => {
           </p>
         </div>
 
-        {/* Why the Inception Paris Scene */}
+        {/* Referencing the Inception Paris Scene */}
         <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-3">
           <div className="flex items-center space-x-2 text-zinc-900 font-semibold text-base">
             <Move className="w-4 h-4 text-zinc-600" />
-            <span>Why the Inception Paris Scene?</span>
+            <span>Referencing the Paris Scene from Inception</span>
           </div>
           <p className="text-sm text-zinc-500 leading-relaxed">
-            In Christopher Nolan’s <em>Inception</em>, the dream architect realizes that in a constructed world, the laws of physics are not fixed: by sheer intention, she bends the avenues of Paris 90 degrees overhead into the sky, creating an impossible architectural canopy. 
+            We are referencing the iconic Paris folding scene from Christopher Nolan’s <em>Inception</em>. In the film, the architect realizes that in a constructed world, the laws of physics are not fixed: by intention, she bends the avenues of Paris 90 degrees overhead into the sky. 
             Virtual Worlds brings that same architectural plasticity to live entertainment: an environment that breathes, folds, and pulses in direct conversation with the room.
           </p>
         </div>
