@@ -1,417 +1,297 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { 
   Sparkles, 
   Eye, 
   Volume2, 
   Layers, 
   Move, 
-  Zap,
-  Info,
-  RotateCcw,
-  Maximize2
+  Zap, 
+  RotateCcw, 
+  CheckCircle2, 
+  Flame, 
+  Grid
 } from 'lucide-react';
 
-interface Pixel {
-  homeX: number;
-  homeY: number;
+interface BlockTile {
+  col: number;
+  row: number;
   x: number;
   y: number;
-  vx: number;
-  vy: number;
-  size: number;
-  r: number;
-  g: number;
-  b: number;
-  baseAlpha: number;
-  currentAlpha: number;
+  width: number;
+  height: number;
+  batchId: number;
+  revealed: boolean;
+  opacity: number;
+  glow: number;
 }
 
 export const VirtualWorldsVisual: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
 
-  const [crowdEnergyLevel, setCrowdEnergyLevel] = useState<number>(85);
-  const [isInteracting, setIsInteracting] = useState<boolean>(false);
-  const [stats, setStats] = useState({ fps: 60, activePixels: 6400 });
-  const [resetKey, setResetKey] = useState<number>(0);
+  const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
+  const [batchPattern, setBatchPattern] = useState<'radial' | 'matrix' | 'clusters'>('radial');
+  const [revealedPercent, setRevealedPercent] = useState<number>(0);
+  const [isLightingUp, setIsLightingUp] = useState<boolean>(false);
+  const [activeBatchInfo, setActiveBatchInfo] = useState({ totalBatches: 24, currentBatch: 24 });
 
+  // Load the photorealistic Inception Paris image
   useEffect(() => {
+    const img = new Image();
+    img.src = '/inception_paris_fold.jpg';
+    img.onload = () => {
+      imageRef.current = img;
+      setIsImageLoaded(true);
+    };
+  }, []);
+
+  // Main canvas and batch-lighting animation loop
+  useEffect(() => {
+    if (!isImageLoaded) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const img = imageRef.current;
+    if (!img) return;
+
     let animationFrameId: number;
     let width = (canvas.width = canvas.parentElement?.clientWidth || 920);
-    let height = (canvas.height = 500);
+    // 16:9 aspect ratio height
+    let height = (canvas.height = Math.round(width * (9 / 16)));
 
-    const handleResize = () => {
-      if (!canvas.parentElement) return;
-      width = canvas.width = canvas.parentElement.clientWidth;
-      height = canvas.height = 500;
-      generateInceptionParisPixels();
-    };
+    const blockSize = 16; // 16x16px clusters (~2,000 - 3,500 batches, high-performance & visually crisp)
+    let cols = Math.ceil(width / blockSize);
+    let rows = Math.ceil(height / blockSize);
 
-    window.addEventListener('resize', handleResize);
+    let tiles: BlockTile[] = [];
 
-    // Mouse coordinates and state
+    // Mouse coordinates for gravitational warp on revealed areas
     const mouse = {
       x: -1000,
       y: -1000,
-      radius: 125,
-      isDown: false,
+      radius: 130,
+      rippleRadius: 0,
     };
 
-    let pixels: Pixel[] = [];
+    // Initialize or recalculate tiles
+    const createTiles = (originX = width / 2, originY = height / 2, pattern = batchPattern) => {
+      cols = Math.ceil(width / blockSize);
+      rows = Math.ceil(height / blockSize);
+      tiles = [];
 
-    // Helper: Draw the iconic Paris Inception folding scene onto an off-screen buffer
-    const generateInceptionParisPixels = () => {
-      const offscreen = document.createElement('canvas');
-      offscreen.width = width;
-      offscreen.height = height;
-      const offCtx = offscreen.getContext('2d');
-      if (!offCtx) return;
-
-      const w = width;
-      const h = height;
-
-      // 1. Sky & Atmospheric Twilight in the horizon gap
-      const skyGrad = offCtx.createLinearGradient(0, 0, 0, h);
-      skyGrad.addColorStop(0, '#0f172a'); // deep navy at top
-      skyGrad.addColorStop(0.35, '#1e293b');
-      skyGrad.addColorStop(0.48, '#e0e7ff'); // twilight horizon light
-      skyGrad.addColorStop(0.52, '#fde68a'); // golden sunset fold horizon
-      skyGrad.addColorStop(0.65, '#334155');
-      skyGrad.addColorStop(1, '#0f172a');
-      offCtx.fillStyle = skyGrad;
-      offCtx.fillRect(0, 0, w, h);
-
-      // 2. LOWER HALF: Paris Street Level
-      // Left Haussmann Building
-      offCtx.fillStyle = '#edd6b1'; // Parisian limestone
-      offCtx.fillRect(0, h * 0.52, w * 0.32, h * 0.48);
-
-      // Mansard Roof on Left (Slate Blue)
-      offCtx.fillStyle = '#475569';
-      offCtx.beginPath();
-      offCtx.moveTo(0, h * 0.52);
-      offCtx.lineTo(w * 0.32, h * 0.52);
-      offCtx.lineTo(w * 0.28, h * 0.44);
-      offCtx.lineTo(0, h * 0.44);
-      offCtx.fill();
-
-      // Right Haussmann Building
-      offCtx.fillStyle = '#e8d2ab'; // Parisian limestone
-      offCtx.fillRect(w * 0.68, h * 0.52, w * 0.32, h * 0.48);
-
-      // Mansard Roof on Right
-      offCtx.fillStyle = '#475569';
-      offCtx.beginPath();
-      offCtx.moveTo(w * 0.68, h * 0.52);
-      offCtx.lineTo(w, h * 0.52);
-      offCtx.lineTo(w, h * 0.44);
-      offCtx.lineTo(w * 0.72, h * 0.44);
-      offCtx.fill();
-
-      // Street in Central Perspective
-      offCtx.fillStyle = '#374151'; // Cobblestone asphalt road
-      offCtx.beginPath();
-      offCtx.moveTo(w * 0.32, h);
-      offCtx.lineTo(w * 0.68, h);
-      offCtx.lineTo(w * 0.54, h * 0.52);
-      offCtx.lineTo(w * 0.46, h * 0.52);
-      offCtx.fill();
-
-      // Sidewalks
-      offCtx.fillStyle = '#9ca3af';
-      offCtx.beginPath();
-      offCtx.moveTo(w * 0.30, h);
-      offCtx.lineTo(w * 0.34, h);
-      offCtx.lineTo(w * 0.47, h * 0.52);
-      offCtx.lineTo(w * 0.45, h * 0.52);
-      offCtx.fill();
-
-      offCtx.beginPath();
-      offCtx.moveTo(w * 0.66, h);
-      offCtx.lineTo(w * 0.70, h);
-      offCtx.lineTo(w * 0.55, h * 0.52);
-      offCtx.lineTo(w * 0.53, h * 0.52);
-      offCtx.fill();
-
-      // Left Parisian Cafe (Red / Orange Awning)
-      offCtx.fillStyle = '#dc2626';
-      offCtx.fillRect(w * 0.22, h * 0.78, w * 0.10, h * 0.05);
-      offCtx.fillStyle = '#ea580c';
-      offCtx.fillRect(w * 0.22, h * 0.83, w * 0.10, h * 0.02);
-
-      // Parisian Trees (Rich Greens)
-      offCtx.fillStyle = '#15803d';
-      offCtx.beginPath();
-      offCtx.arc(w * 0.36, h * 0.72, 28, 0, Math.PI * 2);
-      offCtx.arc(w * 0.41, h * 0.62, 18, 0, Math.PI * 2);
-      offCtx.arc(w * 0.64, h * 0.72, 28, 0, Math.PI * 2);
-      offCtx.arc(w * 0.59, h * 0.62, 18, 0, Math.PI * 2);
-      offCtx.fill();
-
-      // Glowing Windows on Lower Buildings
-      offCtx.fillStyle = '#fef08a';
-      for (let floor = 0; floor < 5; floor++) {
-        const yPos = h * 0.56 + floor * (h * 0.08);
-        for (let col = 0; col < 4; col++) {
-          offCtx.fillRect(w * 0.03 + col * (w * 0.07), yPos, w * 0.035, h * 0.045);
-          offCtx.fillRect(w * 0.72 + col * (w * 0.065), yPos, w * 0.035, h * 0.045);
-        }
-      }
-
-      // Continuous Wrought-Iron Balconies (Dark Charcoal)
-      offCtx.fillStyle = '#18181b';
-      offCtx.fillRect(0, h * 0.68, w * 0.32, h * 0.015);
-      offCtx.fillRect(0, h * 0.84, w * 0.32, h * 0.015);
-      offCtx.fillRect(w * 0.68, h * 0.68, w * 0.32, h * 0.015);
-      offCtx.fillRect(w * 0.68, h * 0.84, w * 0.32, h * 0.015);
-
-      // Warm Street Lamps (Amber Glow)
-      offCtx.fillStyle = '#fbbf24';
-      offCtx.beginPath();
-      offCtx.arc(w * 0.38, h * 0.82, 6, 0, Math.PI * 2);
-      offCtx.arc(w * 0.62, h * 0.82, 6, 0, Math.PI * 2);
-      offCtx.fill();
-
-      // 3. THE 90-DEGREE FOLDING CURVE (Center Transition)
-      // The road and facades bending directly up into the sky
-      offCtx.fillStyle = '#475569';
-      offCtx.beginPath();
-      offCtx.moveTo(w * 0.46, h * 0.52);
-      offCtx.lineTo(w * 0.54, h * 0.52);
-      offCtx.lineTo(w * 0.56, h * 0.46);
-      offCtx.lineTo(w * 0.44, h * 0.46);
-      offCtx.fill();
-
-      // 4. UPPER HALF: The Inverted City Overhead (The Ceiling)
-      // Upside-down Haussmann buildings hanging down!
-      offCtx.fillStyle = '#dfc8a2'; // Inverted limestone
-      offCtx.fillRect(0, 0, w * 0.33, h * 0.44);
-
-      // Inverted Mansard Roof
-      offCtx.fillStyle = '#334155';
-      offCtx.beginPath();
-      offCtx.moveTo(0, h * 0.44);
-      offCtx.lineTo(w * 0.33, h * 0.44);
-      offCtx.lineTo(w * 0.29, h * 0.48);
-      offCtx.lineTo(0, h * 0.48);
-      offCtx.fill();
-
-      // Inverted Right Building
-      offCtx.fillStyle = '#dbc49e';
-      offCtx.fillRect(w * 0.67, 0, w * 0.33, h * 0.44);
-
-      // Inverted Right Roof
-      offCtx.fillStyle = '#334155';
-      offCtx.beginPath();
-      offCtx.moveTo(w * 0.67, h * 0.44);
-      offCtx.lineTo(w, h * 0.44);
-      offCtx.lineTo(w, h * 0.48);
-      offCtx.lineTo(w * 0.71, h * 0.48);
-      offCtx.fill();
-
-      // Inverted Overhead Street
-      offCtx.fillStyle = '#1f2937';
-      offCtx.beginPath();
-      offCtx.moveTo(w * 0.33, 0);
-      offCtx.lineTo(w * 0.67, 0);
-      offCtx.lineTo(w * 0.56, h * 0.44);
-      offCtx.lineTo(w * 0.44, h * 0.44);
-      offCtx.fill();
-
-      // Inverted Glowing Windows overhead
-      offCtx.fillStyle = '#fde047';
-      for (let floor = 0; floor < 4; floor++) {
-        const yPos = h * 0.06 + floor * (h * 0.08);
-        for (let col = 0; col < 4; col++) {
-          offCtx.fillRect(w * 0.03 + col * (w * 0.07), yPos, w * 0.035, h * 0.045);
-          offCtx.fillRect(w * 0.72 + col * (w * 0.065), yPos, w * 0.035, h * 0.045);
-        }
-      }
-
-      // Inverted Wrought-Iron Balconies
-      offCtx.fillStyle = '#09090b';
-      offCtx.fillRect(0, h * 0.16, w * 0.33, h * 0.015);
-      offCtx.fillRect(0, h * 0.32, w * 0.33, h * 0.015);
-      offCtx.fillRect(w * 0.67, h * 0.16, w * 0.33, h * 0.015);
-      offCtx.fillRect(w * 0.67, h * 0.32, w * 0.33, h * 0.015);
-
-      // Inverted Street Lamps
-      offCtx.fillStyle = '#f59e0b';
-      offCtx.beginPath();
-      offCtx.arc(w * 0.40, h * 0.14, 5, 0, Math.PI * 2);
-      offCtx.arc(w * 0.60, h * 0.14, 5, 0, Math.PI * 2);
-      offCtx.fill();
-
-      // 5. EXTRACT PIXELS FROM THE DRAWN SCENE
-      const imgData = offCtx.getImageData(0, 0, w, h);
-      const data = imgData.data;
-
-      pixels = [];
-      const cols = 100;
-      const rows = 56;
-      const stepX = Math.floor(w / cols);
-      const stepY = Math.floor(h / rows);
+      const totalBatches = 28;
+      const maxDist = Math.sqrt(width * width + height * height);
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const sampleX = Math.floor(c * stepX + stepX / 2);
-          const sampleY = Math.floor(r * stepY + stepY / 2);
-          const idx = (sampleY * w + sampleX) * 4;
+          const x = c * blockSize;
+          const y = r * blockSize;
 
-          const red = data[idx];
-          const green = data[idx + 1];
-          const blue = data[idx + 2];
-          const alpha = data[idx + 3] / 255;
+          let batchId = 0;
 
-          if (alpha > 0.05) {
-            // Scattered starting position to animate in and assemble
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 60 + Math.random() * 140;
-
-            pixels.push({
-              homeX: sampleX,
-              homeY: sampleY,
-              x: sampleX + Math.cos(angle) * dist,
-              y: sampleY + Math.sin(angle) * dist,
-              vx: 0,
-              vy: 0,
-              size: stepX * 0.95,
-              r: red,
-              g: green,
-              b: blue,
-              baseAlpha: alpha,
-              currentAlpha: 0.1,
-            });
+          if (pattern === 'radial') {
+            // Batches radiate outward from the click origin point
+            const dx = (x + blockSize / 2) - originX;
+            const dy = (y + blockSize / 2) - originY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            batchId = Math.min(totalBatches - 1, Math.floor((dist / (maxDist * 0.75)) * totalBatches));
+          } else if (pattern === 'matrix') {
+            // Batches flow diagonally across the matrix like a neural shader pass
+            const normalized = (c / cols + r / rows) / 2;
+            batchId = Math.min(totalBatches - 1, Math.floor(normalized * totalBatches));
+          } else {
+            // Clustered organic batches
+            const noise = Math.sin(c * 0.25) * Math.cos(r * 0.25) * 0.5 + 0.5;
+            batchId = Math.min(totalBatches - 1, Math.floor(noise * totalBatches));
           }
+
+          tiles.push({
+            col: c,
+            row: r,
+            x,
+            y,
+            width: blockSize,
+            height: blockSize,
+            batchId,
+            revealed: false,
+            opacity: 0,
+            glow: 0,
+          });
         }
       }
 
-      setStats((s) => ({ ...s, activePixels: pixels.length }));
+      setActiveBatchInfo({ totalBatches, currentBatch: 0 });
     };
 
-    generateInceptionParisPixels();
+    // Trigger full blackout and subsequent lighting in batches
+    let currentBatchToReveal = 0;
+    let batchTimer: any = null;
 
-    // Mouse listeners
+    const startBatchLighting = (clickX = width / 2, clickY = height / 2) => {
+      if (batchTimer) clearInterval(batchTimer);
+      setIsLightingUp(true);
+      setRevealedPercent(0);
+
+      // 1. ALL PIXELS GO TO BLACK
+      createTiles(clickX, clickY, batchPattern);
+
+      currentBatchToReveal = 0;
+      const totalBatches = 28;
+
+      // 2. LIGHT UP IN BATCHES AT A TIME
+      const intervalMs = 45; // Smooth rapid cascade across ~1.3 seconds
+      batchTimer = setInterval(() => {
+        currentBatchToReveal++;
+        setActiveBatchInfo({ totalBatches, currentBatch: currentBatchToReveal });
+
+        let revealedCount = 0;
+        tiles.forEach((t) => {
+          if (t.batchId <= currentBatchToReveal) {
+            t.revealed = true;
+            revealedCount++;
+          }
+        });
+
+        const pct = Math.round((revealedCount / tiles.length) * 100);
+        setRevealedPercent(pct);
+
+        if (currentBatchToReveal >= totalBatches) {
+          if (batchTimer) clearInterval(batchTimer);
+          setIsLightingUp(false);
+          setRevealedPercent(100);
+        }
+      }, intervalMs);
+    };
+
+    // Start initial batch lighting on mount
+    startBatchLighting(width / 2, height / 2);
+
+    // Canvas click triggers full blackout and new batch-lighting sequence from the click point!
+    const handleCanvasClick = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      mouse.rippleRadius = 1;
+      startBatchLighting(clickX, clickY);
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
-      setIsInteracting(true);
     };
 
     const handleMouseLeave = () => {
       mouse.x = -1000;
       mouse.y = -1000;
-      setIsInteracting(false);
     };
 
-    const handleMouseDown = () => {
-      mouse.isDown = true;
-      mouse.radius = 210; // Gravitational shockwave
-    };
-
-    const handleMouseUp = () => {
-      mouse.isDown = false;
-      mouse.radius = 125;
-    };
-
+    canvas.addEventListener('click', handleCanvasClick);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseleave', handleMouseLeave);
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mouseup', handleMouseUp);
 
-    // Animation Render Loop
-    let lastTime = performance.now();
-    let frameCount = 0;
-    let fpsTimer = 0;
+    const handleResize = () => {
+      if (!canvas.parentElement) return;
+      width = canvas.width = canvas.parentElement.clientWidth;
+      height = canvas.height = Math.round(width * (9 / 16));
+      startBatchLighting(width / 2, height / 2);
+    };
 
-    const render = (currentTime: number) => {
-      const delta = currentTime - lastTime;
-      lastTime = currentTime;
+    window.addEventListener('resize', handleResize);
 
-      frameCount++;
-      fpsTimer += delta;
-      if (fpsTimer >= 1000) {
-        setStats((s) => ({ ...s, fps: frameCount }));
-        frameCount = 0;
-        fpsTimer = 0;
-      }
-
+    // Main animation render loop
+    const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Subtle background grid
-      ctx.fillStyle = '#090d16';
+      // Background: Pitch Black
+      ctx.fillStyle = '#05070c';
       ctx.fillRect(0, 0, width, height);
 
-      const energySpring = (crowdEnergyLevel / 85) * 0.085;
+      // Render tiles
+      for (let i = 0; i < tiles.length; i++) {
+        const t = tiles[i];
 
-      for (let i = 0; i < pixels.length; i++) {
-        const p = pixels[i];
+        if (t.revealed) {
+          // Animate opacity lighting up
+          if (t.opacity < 1) {
+            t.opacity += 0.15;
+            if (t.opacity > 1) t.opacity = 1;
+          }
 
-        // 1. Spring force to home position in the folded Paris scene
-        const dxHome = p.homeX - p.x;
-        const dyHome = p.homeY - p.y;
-        p.vx += dxHome * energySpring;
-        p.vy += dyHome * energySpring;
+          // Initial batch glow flash
+          if (t.glow < 1 && t.opacity < 0.6) {
+            t.glow = 1.0;
+          } else if (t.glow > 0) {
+            t.glow -= 0.08;
+            if (t.glow < 0) t.glow = 0;
+          }
 
-        // 2. Gravitational warp / mouse interaction
-        const dxMouse = p.x - mouse.x;
-        const dyMouse = p.y - mouse.y;
-        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+          // Calculate interactive gravitational distortion if mouse is near
+          let renderX = t.x;
+          let renderY = t.y;
 
-        if (distMouse < mouse.radius) {
-          const forceRatio = 1 - distMouse / mouse.radius;
-          const force = forceRatio * (mouse.isDown ? 28 : 12);
-          const angle = Math.atan2(dyMouse, dxMouse);
+          if (mouse.x > 0 && mouse.y > 0) {
+            const dx = t.x + t.width / 2 - mouse.x;
+            const dy = t.y + t.height / 2 - mouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
 
-          // Disperse pixels away from cursor, simulating architectural fold warp
-          p.vx += Math.cos(angle) * force;
-          p.vy += Math.sin(angle) * force;
+            if (dist < mouse.radius) {
+              const force = (1 - dist / mouse.radius) * 14;
+              const angle = Math.atan2(dy, dx);
+              renderX += Math.cos(angle) * force;
+              renderY += Math.sin(angle) * force;
+            }
+          }
 
-          // Increase luminance near the cursor
-          p.currentAlpha = Math.min(1.0, p.baseAlpha + forceRatio * 0.4);
-        } else {
-          // Smooth return to base alpha
-          p.currentAlpha += (p.baseAlpha - p.currentAlpha) * 0.06;
+          // Draw the photorealistic photo slice for this block
+          ctx.save();
+          ctx.globalAlpha = t.opacity;
+
+          // Source coordinates on the high-res image
+          const sx = (t.x / width) * img.naturalWidth;
+          const sy = (t.y / height) * img.naturalHeight;
+          const sWidth = (t.width / width) * img.naturalWidth;
+          const sHeight = (t.height / height) * img.naturalHeight;
+
+          ctx.drawImage(
+            img,
+            sx,
+            sy,
+            sWidth,
+            sHeight,
+            renderX,
+            renderY,
+            t.width + 0.5,
+            t.height + 0.5
+          );
+
+          // Digital illumination flash when the batch lights up
+          if (t.glow > 0.05) {
+            ctx.fillStyle = `rgba(254, 240, 138, ${t.glow * 0.4})`; // golden twilight light
+            ctx.fillRect(renderX, renderY, t.width, t.height);
+
+            ctx.strokeStyle = `rgba(255, 255, 255, ${t.glow * 0.7})`;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(renderX, renderY, t.width, t.height);
+          }
+
+          ctx.restore();
         }
-
-        // 3. Apply damping/friction
-        p.vx *= 0.81;
-        p.vy *= 0.81;
-
-        p.x += p.vx;
-        p.y += p.vy;
-
-        // 4. Draw pixel with its true sampled color from the Inception Paris scene
-        const isNearMouse = distMouse < mouse.radius;
-        const brightness = isNearMouse ? 1.35 : 1.0;
-        const rColor = Math.min(255, Math.floor(p.r * brightness));
-        const gColor = Math.min(255, Math.floor(p.g * brightness));
-        const bColor = Math.min(255, Math.floor(p.b * brightness));
-
-        ctx.fillStyle = `rgb(${rColor}, ${gColor}, ${bColor})`;
-        ctx.globalAlpha = p.currentAlpha;
-
-        const size = p.size * (isNearMouse ? 1.25 : 1.0);
-        ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
       }
 
-      ctx.globalAlpha = 1.0;
-
-      // Draw subtle Inception gravitational field circle around cursor
+      // Draw subtle interactive cursor gravity lens
       if (mouse.x > 0 && mouse.y > 0) {
+        ctx.save();
         ctx.beginPath();
         ctx.arc(mouse.x, mouse.y, mouse.radius * 0.75, 0, Math.PI * 2);
-        ctx.strokeStyle = mouse.isDown ? 'rgba(251, 191, 36, 0.8)' : 'rgba(255, 255, 255, 0.4)';
+        ctx.strokeStyle = 'rgba(254, 240, 138, 0.45)';
         ctx.lineWidth = 1.5;
-        ctx.setLineDash([5, 5]);
+        ctx.setLineDash([4, 6]);
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.restore();
       }
 
       animationFrameId = requestAnimationFrame(render);
@@ -421,18 +301,18 @@ export const VirtualWorldsVisual: React.FC = () => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      if (batchTimer) clearInterval(batchTimer);
       window.removeEventListener('resize', handleResize);
+      canvas.removeEventListener('click', handleCanvasClick);
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('mouseleave', handleMouseLeave);
-      canvas.removeEventListener('mousedown', handleMouseDown);
-      canvas.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [crowdEnergyLevel, resetKey]);
+  }, [isImageLoaded, batchPattern]);
 
   return (
     <div className="space-y-12 max-w-5xl mx-auto">
       {/* ========================================================================= */}
-      {/* 1. HERO TITLE & REFERENCE */}
+      {/* 1. HERO TITLE & CONCEPT */}
       {/* ========================================================================= */}
       <div className="text-center max-w-2xl mx-auto space-y-3 pt-2">
         <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 text-xs border border-zinc-200">
@@ -443,82 +323,86 @@ export const VirtualWorldsVisual: React.FC = () => {
           Virtual Worlds
         </h2>
         <p className="text-zinc-500 text-sm sm:text-base leading-relaxed">
-          The canvas below renders the iconic <strong>Paris folding city scene from Inception</strong> entirely out of reactive colored pixels. Move your mouse to warp the gravity of the city in real time, simulating how a space perceives and reacts to crowd energy.
+          Photorealistic real-time environment rendering inspired by the iconic <strong>Paris folding street scene from Inception</strong>. Click the canvas to trigger full blackouts and watch the city light up in digital pixel batches, reacting dynamically to your presence.
         </p>
 
-        {/* Scene Badge */}
-        <div className="pt-1 flex items-center justify-center space-x-2 text-xs">
-          <span className="bg-zinc-100 text-zinc-700 px-3 py-1 rounded-lg border border-zinc-200/80 font-medium">
-            Inception (2010) • Parisian Avenue 90° Gravity Fold
-          </span>
-          <button
-            onClick={() => setResetKey((k) => k + 1)}
-            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-all text-xs"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>Re-assemble Pixels</span>
-          </button>
+        {/* Batch Pattern Controls */}
+        <div className="pt-1 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span className="text-zinc-400 mr-1">Batch Reveal Pattern:</span>
+          {[
+            { id: 'radial', label: 'Radial Wave from Click' },
+            { id: 'matrix', label: 'Diagonal Matrix Sweep' },
+            { id: 'clusters', label: 'Organic Neural Clusters' },
+          ].map((mode) => (
+            <button
+              key={mode.id}
+              onClick={() => setBatchPattern(mode.id as any)}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                batchPattern === mode.id
+                  ? 'bg-zinc-900 text-white font-medium shadow-xs'
+                  : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-50'
+              }`}
+            >
+              {mode.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. REAL-TIME GENERATIVE COLORED PIXEL CANVAS */}
+      {/* 2. THE PHOTOREALISTIC INCEPTION CANVAS (BATCH LIGHTING & INTERACTION) */}
       {/* ========================================================================= */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl shadow-lg overflow-hidden relative group">
-        {/* Real-time Telemetry Bar */}
+      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden relative">
+        {/* Top Telemetry HUD */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/80 text-xs bg-zinc-900/90 text-zinc-400">
           <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
             <span className="text-zinc-200 font-medium font-mono text-[11px]">
-              PARIS_INCEPTION_FOLD.PIXELS
+              INCEPTION_PARIS_HAUSSMANN_FOLD.RAW
             </span>
-            <span className="text-zinc-600">•</span>
+            <span className="text-zinc-700">•</span>
             <span className="text-[11px] text-zinc-400 hidden sm:inline">
-              Limestone Facades • Cobalt Sky • Inverted City
+              Photorealistic 16x16 Pixel Clusters
             </span>
           </div>
 
           <div className="flex items-center space-x-3 text-[11px] font-mono">
-            <span>Pixels: {stats.activePixels.toLocaleString()}</span>
-            <span>FPS: {stats.fps}</span>
+            <span>
+              Batches: {activeBatchInfo.currentBatch}/{activeBatchInfo.totalBatches}
+            </span>
+            <span>Revealed: {revealedPercent}%</span>
             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-              isInteracting ? 'bg-amber-400 text-zinc-950' : 'bg-zinc-800 text-zinc-400'
+              isLightingUp ? 'bg-amber-400 text-zinc-950 animate-pulse' : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
             }`}>
-              {isInteracting ? 'GRAVITATIONAL WARP' : 'STABLE MATRIX'}
+              {isLightingUp ? 'BATCHES LIGHTING UP' : '100% REVEALED'}
             </span>
           </div>
         </div>
 
-        {/* The Colored Pixel Canvas */}
-        <div className="relative w-full h-[500px] bg-zinc-950 cursor-crosshair select-none">
+        {/* The Interactive Photorealistic Canvas */}
+        <div className="relative w-full aspect-video max-h-[520px] bg-black cursor-pointer select-none">
           <canvas ref={canvasRef} className="w-full h-full block" />
 
-          {/* Floating Instructions */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-900/90 border border-zinc-700/80 px-4 py-1.5 rounded-full text-xs text-zinc-300 shadow-lg flex items-center space-x-2 pointer-events-none backdrop-blur-md">
-            <Move className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-            <span>Move cursor to bend and distort Paris • Click to trigger a folding shockwave</span>
+          {/* Floating Instruction Banner */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-900/90 border border-zinc-700/80 px-4 py-2 rounded-full text-xs text-zinc-200 shadow-xl flex items-center space-x-2.5 pointer-events-none backdrop-blur-md">
+            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+            <span>
+              <strong>Click anywhere:</strong> All pixels turn black, then light up in batches from your click!
+            </span>
           </div>
         </div>
 
-        {/* Energy Slider Controls */}
+        {/* Bottom Control & Status Strip */}
         <div className="px-5 py-3 bg-zinc-900 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-400">
-          <div className="flex items-center space-x-3 w-full sm:w-auto">
-            <span className="text-[11px] font-medium text-zinc-300 uppercase tracking-wider">
-              BPM / Energy Spring Rate:
+          <div className="flex items-center space-x-2 text-zinc-300">
+            <Move className="w-3.5 h-3.5 text-amber-400" />
+            <span>
+              <strong>Move mouse:</strong> Warps the photorealistic Haussmann facades in real time.
             </span>
-            <input
-              type="range"
-              min="30"
-              max="150"
-              value={crowdEnergyLevel}
-              onChange={(e) => setCrowdEnergyLevel(Number(e.target.value))}
-              className="w-36 accent-amber-400 bg-zinc-800 h-1.5 rounded-lg cursor-pointer"
-            />
-            <span className="font-mono text-amber-400 font-semibold">{crowdEnergyLevel} BPM</span>
           </div>
 
-          <div className="text-[11px] text-zinc-400">
-            Simulates crowd kinetic energy altering the elasticity of the environment
+          <div className="text-[11px] font-mono text-zinc-400">
+            Cluster resolution: 16×16px (~2,400 discrete block batches)
           </div>
         </div>
       </div>
@@ -535,7 +419,7 @@ export const VirtualWorldsVisual: React.FC = () => {
             Why the Inception Paris Scene?
           </h3>
           <p className="text-zinc-500 text-sm mt-2 leading-relaxed">
-            In Christopher Nolan’s <em>Inception</em>, Ariadne realizes that in a constructed world, the laws of physics are not fixed: by sheer intention, she folds the Haussmann avenues of Paris over onto themselves, turning the ground into a ceiling. 
+            In Christopher Nolan’s <em>Inception</em>, the dream architect realizes that physical reality is not static: by sheer intention, she bends the avenues of Paris 90 degrees overhead into the sky, creating an impossible architectural canopy. 
             <strong> Virtual Worlds brings that same architectural plasticity to live entertainment.</strong>
           </p>
         </div>
@@ -551,7 +435,7 @@ export const VirtualWorldsVisual: React.FC = () => {
               <h4 className="text-sm font-semibold text-zinc-900 mt-0.5">Crowd Energy Perception</h4>
             </div>
             <p className="text-xs text-zinc-500 leading-relaxed">
-              Sensors track dancefloor velocity, BPM cadence, and movement density. Just as your mouse bent the Paris pixels above, the collective crowd conducts how the physical room behaves.
+              Sensors track dancefloor velocity, BPM cadence, and movement density. Just as your click triggers batches of light and your cursor warps the Paris streets, the crowd conducts how the physical room behaves.
             </p>
           </div>
 
@@ -564,7 +448,7 @@ export const VirtualWorldsVisual: React.FC = () => {
               <h4 className="text-sm font-semibold text-zinc-900 mt-0.5">Zero Pre-Rendered Loops</h4>
             </div>
             <p className="text-xs text-zinc-500 leading-relaxed">
-              No VJs playing looping MP4 videos. Real-time procedural shaders and voxel compute synthesize shifting environments live on GPUs at 60–120 FPS based on audio frequencies.
+              No VJs playing looping MP4 videos. Real-time procedural shaders and voxel compute synthesize shifting environments live on GPUs at 60–120 FPS in direct response to acoustic frequencies.
             </p>
           </div>
 
