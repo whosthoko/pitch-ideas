@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { AgenticCommoditiesVisual } from './components/AgenticCommoditiesVisual';
 import { DropSimVisual } from './components/DropSimVisual';
-import { ProjectTeasers } from './components/ProjectTeasers';
+import { VirtualWorldsVisual } from './components/VirtualWorldsVisual';
 
 export function App() {
-  const [currentProject, setCurrentProject] = useState<'commodities' | 'dropsim' | 'virtualworlds'>('dropsim');
+  const [currentProject, setCurrentProject] = useState<'commodities' | 'dropsim' | 'virtualworlds'>('virtualworlds');
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-zinc-900 flex flex-col font-sans selection:bg-zinc-900 selection:text-white">
@@ -19,12 +19,7 @@ export function App() {
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10">
         {currentProject === 'commodities' && <AgenticCommoditiesVisual />}
         {currentProject === 'dropsim' && <DropSimVisual />}
-        {currentProject === 'virtualworlds' && (
-          <ProjectTeasers
-            project={currentProject}
-            onBackToCommodities={() => setCurrentProject('commodities')}
-          />
-        )}
+        {currentProject === 'virtualworlds' && <VirtualWorldsVisual />}
       </main>
 
       {/* Minimalist Footer */}

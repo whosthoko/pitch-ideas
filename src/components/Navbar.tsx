@@ -39,7 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : 'text-zinc-500 hover:text-zinc-900'
                 }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
+                <span className={`w-1.5 h-1.5 rounded-full ${currentProject === 'dropsim' ? 'bg-amber-500' : 'bg-zinc-300'}`} />
                 <span>DropSim</span>
               </button>
 
@@ -51,7 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : 'text-zinc-500 hover:text-zinc-900'
                 }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
+                <span className={`w-1.5 h-1.5 rounded-full ${currentProject === 'virtualworlds' ? 'bg-purple-500' : 'bg-zinc-300'}`} />
                 <span>Virtual Worlds</span>
               </button>
             </div>
