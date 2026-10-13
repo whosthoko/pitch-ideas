@@ -1,13 +1,11 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { 
   Sparkles, 
   Eye, 
   Volume2, 
   Layers, 
   Move, 
-  Zap, 
   RotateCcw, 
-  CheckCircle2, 
   Flame, 
   Grid
 } from 'lucide-react';
@@ -27,13 +25,13 @@ interface BlockTile {
 
 export const VirtualWorldsVisual: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
 
   const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
-  const [batchPattern, setBatchPattern] = useState<'radial' | 'matrix' | 'clusters'>('radial');
   const [revealedPercent, setRevealedPercent] = useState<number>(0);
   const [isLightingUp, setIsLightingUp] = useState<boolean>(false);
-  const [activeBatchInfo, setActiveBatchInfo] = useState({ totalBatches: 24, currentBatch: 24 });
+  const [batchStats, setBatchStats] = useState({ totalBatches: 80, currentBatch: 80, totalTiles: 0 });
 
   // Load the photorealistic Inception Paris image
   useEffect(() => {
@@ -45,7 +43,7 @@ export const VirtualWorldsVisual: React.FC = () => {
     };
   }, []);
 
-  // Main canvas and batch-lighting animation loop
+  // Main canvas and diagonal matrix sweep animation loop
   useEffect(() => {
     if (!isImageLoaded) return;
 
@@ -58,11 +56,10 @@ export const VirtualWorldsVisual: React.FC = () => {
     if (!img) return;
 
     let animationFrameId: number;
-    let width = (canvas.width = canvas.parentElement?.clientWidth || 920);
-    // 16:9 aspect ratio height
-    let height = (canvas.height = Math.round(width * (9 / 16)));
+    let width = (canvas.width = canvas.parentElement?.clientWidth || 1200);
+    let height = (canvas.height = canvas.parentElement?.clientHeight || 680);
 
-    const blockSize = 16; // 16x16px clusters (~2,000 - 3,500 batches, high-performance & visually crisp)
+    const blockSize = 10; // Fine 10x10px micro-clusters for dense, high-resolution batches
     let cols = Math.ceil(width / blockSize);
     let rows = Math.ceil(height / blockSize);
 
@@ -72,41 +69,25 @@ export const VirtualWorldsVisual: React.FC = () => {
     const mouse = {
       x: -1000,
       y: -1000,
-      radius: 130,
-      rippleRadius: 0,
+      radius: 140,
     };
 
-    // Initialize or recalculate tiles
-    const createTiles = (originX = width / 2, originY = height / 2, pattern = batchPattern) => {
+    const totalBatches = 80; // High-density batches for smooth diagonal matrix sweep
+
+    // Initialize tiles with strict Diagonal Matrix Sweep
+    const createTiles = () => {
       cols = Math.ceil(width / blockSize);
       rows = Math.ceil(height / blockSize);
       tiles = [];
-
-      const totalBatches = 28;
-      const maxDist = Math.sqrt(width * width + height * height);
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const x = c * blockSize;
           const y = r * blockSize;
 
-          let batchId = 0;
-
-          if (pattern === 'radial') {
-            // Batches radiate outward from the click origin point
-            const dx = (x + blockSize / 2) - originX;
-            const dy = (y + blockSize / 2) - originY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            batchId = Math.min(totalBatches - 1, Math.floor((dist / (maxDist * 0.75)) * totalBatches));
-          } else if (pattern === 'matrix') {
-            // Batches flow diagonally across the matrix like a neural shader pass
-            const normalized = (c / cols + r / rows) / 2;
-            batchId = Math.min(totalBatches - 1, Math.floor(normalized * totalBatches));
-          } else {
-            // Clustered organic batches
-            const noise = Math.sin(c * 0.25) * Math.cos(r * 0.25) * 0.5 + 0.5;
-            batchId = Math.min(totalBatches - 1, Math.floor(noise * totalBatches));
-          }
+          // Strict diagonal matrix progression from top-left (0) to bottom-right (totalBatches - 1)
+          const diagonalProgress = (c / cols + r / rows) / 2;
+          const batchId = Math.min(totalBatches - 1, Math.floor(diagonalProgress * totalBatches));
 
           tiles.push({
             col: c,
@@ -123,29 +104,28 @@ export const VirtualWorldsVisual: React.FC = () => {
         }
       }
 
-      setActiveBatchInfo({ totalBatches, currentBatch: 0 });
+      setBatchStats({ totalBatches, currentBatch: 0, totalTiles: tiles.length });
     };
 
-    // Trigger full blackout and subsequent lighting in batches
+    // Trigger full blackout and subsequent diagonal matrix sweep in batches
     let currentBatchToReveal = 0;
     let batchTimer: any = null;
 
-    const startBatchLighting = (clickX = width / 2, clickY = height / 2) => {
+    const startDiagonalMatrixSweep = () => {
       if (batchTimer) clearInterval(batchTimer);
       setIsLightingUp(true);
       setRevealedPercent(0);
 
       // 1. ALL PIXELS GO TO BLACK
-      createTiles(clickX, clickY, batchPattern);
+      createTiles();
 
       currentBatchToReveal = 0;
-      const totalBatches = 28;
 
-      // 2. LIGHT UP IN BATCHES AT A TIME
-      const intervalMs = 45; // Smooth rapid cascade across ~1.3 seconds
+      // 2. DIAGONAL SWEEP LIGHTS UP IN 80 BATCHES
+      const intervalMs = 18; // 18ms x 80 batches = ~1.44s buttery smooth cascade
       batchTimer = setInterval(() => {
         currentBatchToReveal++;
-        setActiveBatchInfo({ totalBatches, currentBatch: currentBatchToReveal });
+        setBatchStats((s) => ({ ...s, currentBatch: currentBatchToReveal }));
 
         let revealedCount = 0;
         tiles.forEach((t) => {
@@ -166,16 +146,12 @@ export const VirtualWorldsVisual: React.FC = () => {
       }, intervalMs);
     };
 
-    // Start initial batch lighting on mount
-    startBatchLighting(width / 2, height / 2);
+    // Initial diagonal sweep on mount
+    startDiagonalMatrixSweep();
 
-    // Canvas click triggers full blackout and new batch-lighting sequence from the click point!
-    const handleCanvasClick = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
-      mouse.rippleRadius = 1;
-      startBatchLighting(clickX, clickY);
+    // Clicking anywhere on the canvas resets to black and restarts the diagonal sweep
+    const handleCanvasClick = () => {
+      startDiagonalMatrixSweep();
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -196,40 +172,56 @@ export const VirtualWorldsVisual: React.FC = () => {
     const handleResize = () => {
       if (!canvas.parentElement) return;
       width = canvas.width = canvas.parentElement.clientWidth;
-      height = canvas.height = Math.round(width * (9 / 16));
-      startBatchLighting(width / 2, height / 2);
+      height = canvas.height = canvas.parentElement.clientHeight;
+      startDiagonalMatrixSweep();
     };
 
     window.addEventListener('resize', handleResize);
 
-    // Main animation render loop
+    // Animation render loop
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Background: Pitch Black
-      ctx.fillStyle = '#05070c';
+      // Background: Deep Pitch Black
+      ctx.fillStyle = '#04060a';
       ctx.fillRect(0, 0, width, height);
 
-      // Render tiles
+      // Cover-fit image calculation
+      const imgAspect = img.naturalWidth / img.naturalHeight;
+      const canvasAspect = width / height;
+      let renderImgW = width;
+      let renderImgH = height;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (canvasAspect > imgAspect) {
+        renderImgH = width / imgAspect;
+        offsetY = (height - renderImgH) / 2;
+      } else {
+        renderImgW = height * imgAspect;
+        offsetX = (width - renderImgW) / 2;
+      }
+
+      // Render micro-tiles
       for (let i = 0; i < tiles.length; i++) {
         const t = tiles[i];
 
         if (t.revealed) {
-          // Animate opacity lighting up
+          // Fast fade in to 100% opacity
           if (t.opacity < 1) {
-            t.opacity += 0.15;
+            t.opacity += 0.2;
             if (t.opacity > 1) t.opacity = 1;
           }
 
-          // Initial batch glow flash
-          if (t.glow < 1 && t.opacity < 0.6) {
+          // Initial batch illumination flash
+          if (t.glow < 1 && t.opacity < 0.5) {
             t.glow = 1.0;
           } else if (t.glow > 0) {
-            t.glow -= 0.08;
+            t.glow -= 0.07;
             if (t.glow < 0) t.glow = 0;
           }
 
-          // Calculate interactive gravitational distortion if mouse is near
+          // Gravitational warp near mouse cursor
           let renderX = t.x;
           let renderY = t.y;
 
@@ -239,41 +231,45 @@ export const VirtualWorldsVisual: React.FC = () => {
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist < mouse.radius) {
-              const force = (1 - dist / mouse.radius) * 14;
+              const force = (1 - dist / mouse.radius) * 16;
               const angle = Math.atan2(dy, dx);
               renderX += Math.cos(angle) * force;
               renderY += Math.sin(angle) * force;
             }
           }
 
-          // Draw the photorealistic photo slice for this block
           ctx.save();
           ctx.globalAlpha = t.opacity;
 
-          // Source coordinates on the high-res image
-          const sx = (t.x / width) * img.naturalWidth;
-          const sy = (t.y / height) * img.naturalHeight;
-          const sWidth = (t.width / width) * img.naturalWidth;
-          const sHeight = (t.height / height) * img.naturalHeight;
+          // Source slice on the photo
+          const normalizedX = (t.x - offsetX) / renderImgW;
+          const normalizedY = (t.y - offsetY) / renderImgH;
+          const normalizedW = t.width / renderImgW;
+          const normalizedH = t.height / renderImgH;
+
+          const sx = normalizedX * img.naturalWidth;
+          const sy = normalizedY * img.naturalHeight;
+          const sw = normalizedW * img.naturalWidth;
+          const sh = normalizedH * img.naturalHeight;
 
           ctx.drawImage(
             img,
             sx,
             sy,
-            sWidth,
-            sHeight,
+            sw,
+            sh,
             renderX,
             renderY,
-            t.width + 0.5,
-            t.height + 0.5
+            t.width + 0.6,
+            t.height + 0.6
           );
 
-          // Digital illumination flash when the batch lights up
+          // Golden illumination crest along the leading sweep front
           if (t.glow > 0.05) {
-            ctx.fillStyle = `rgba(254, 240, 138, ${t.glow * 0.4})`; // golden twilight light
+            ctx.fillStyle = `rgba(254, 240, 138, ${t.glow * 0.45})`;
             ctx.fillRect(renderX, renderY, t.width, t.height);
 
-            ctx.strokeStyle = `rgba(255, 255, 255, ${t.glow * 0.7})`;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${t.glow * 0.75})`;
             ctx.lineWidth = 1;
             ctx.strokeRect(renderX, renderY, t.width, t.height);
           }
@@ -282,12 +278,12 @@ export const VirtualWorldsVisual: React.FC = () => {
         }
       }
 
-      // Draw subtle interactive cursor gravity lens
+      // Cursor gravity lens
       if (mouse.x > 0 && mouse.y > 0) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(mouse.x, mouse.y, mouse.radius * 0.75, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(254, 240, 138, 0.45)';
+        ctx.strokeStyle = 'rgba(254, 240, 138, 0.4)';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 6]);
         ctx.stroke();
@@ -307,14 +303,14 @@ export const VirtualWorldsVisual: React.FC = () => {
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [isImageLoaded, batchPattern]);
+  }, [isImageLoaded]);
 
   return (
-    <div className="space-y-12 max-w-5xl mx-auto">
+    <div className="space-y-12 w-full">
       {/* ========================================================================= */}
-      {/* 1. HERO TITLE & CONCEPT */}
+      {/* 1. HERO TITLE */}
       {/* ========================================================================= */}
-      <div className="text-center max-w-2xl mx-auto space-y-3 pt-2">
+      <div className="text-center max-w-3xl mx-auto space-y-2.5 pt-1">
         <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 text-xs border border-zinc-200">
           <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
           <span>Real-Time Generative Computing</span>
@@ -323,86 +319,70 @@ export const VirtualWorldsVisual: React.FC = () => {
           Virtual Worlds
         </h2>
         <p className="text-zinc-500 text-sm sm:text-base leading-relaxed">
-          Photorealistic real-time environment rendering inspired by the iconic <strong>Paris folding street scene from Inception</strong>. Click the canvas to trigger full blackouts and watch the city light up in digital pixel batches, reacting dynamically to your presence.
+          Photorealistic live environment rendering inspired by the iconic <strong>Paris folding street scene from Inception</strong>. 
+          Click the canvas to reset to pitch black, and watch 80 high-density pixel batches sweep diagonally to construct the world.
         </p>
-
-        {/* Batch Pattern Controls */}
-        <div className="pt-1 flex flex-wrap items-center justify-center gap-2 text-xs">
-          <span className="text-zinc-400 mr-1">Batch Reveal Pattern:</span>
-          {[
-            { id: 'radial', label: 'Radial Wave from Click' },
-            { id: 'matrix', label: 'Diagonal Matrix Sweep' },
-            { id: 'clusters', label: 'Organic Neural Clusters' },
-          ].map((mode) => (
-            <button
-              key={mode.id}
-              onClick={() => setBatchPattern(mode.id as any)}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                batchPattern === mode.id
-                  ? 'bg-zinc-900 text-white font-medium shadow-xs'
-                  : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-50'
-              }`}
-            >
-              {mode.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. THE PHOTOREALISTIC INCEPTION CANVAS (BATCH LIGHTING & INTERACTION) */}
+      {/* 2. THE LARGE PHOTOREALISTIC CANVAS (ALMOST FILLS THE PAGE) */}
       {/* ========================================================================= */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden relative">
-        {/* Top Telemetry HUD */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/80 text-xs bg-zinc-900/90 text-zinc-400">
-          <div className="flex items-center space-x-2">
+      <div className="bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden relative w-full">
+        {/* Top Minimal Telemetry Strip */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800/80 text-xs bg-zinc-900/90 text-zinc-400">
+          <div className="flex items-center space-x-2.5">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
             <span className="text-zinc-200 font-medium font-mono text-[11px]">
               INCEPTION_PARIS_HAUSSMANN_FOLD.RAW
             </span>
             <span className="text-zinc-700">•</span>
-            <span className="text-[11px] text-zinc-400 hidden sm:inline">
-              Photorealistic 16x16 Pixel Clusters
+            <span className="text-[11px] text-zinc-400 font-mono hidden sm:inline">
+              Diagonal Matrix Sweep (80 Micro-Batches)
             </span>
           </div>
 
-          <div className="flex items-center space-x-3 text-[11px] font-mono">
+          <div className="flex items-center space-x-4 text-[11px] font-mono">
             <span>
-              Batches: {activeBatchInfo.currentBatch}/{activeBatchInfo.totalBatches}
+              Batch: {batchStats.currentBatch}/{batchStats.totalBatches}
             </span>
             <span>Revealed: {revealedPercent}%</span>
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-              isLightingUp ? 'bg-amber-400 text-zinc-950 animate-pulse' : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+            <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${
+              isLightingUp 
+                ? 'bg-amber-400 text-zinc-950 animate-pulse' 
+                : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
             }`}>
-              {isLightingUp ? 'BATCHES LIGHTING UP' : '100% REVEALED'}
+              {isLightingUp ? 'SWEEPING IN BATCHES' : '100% REVEALED'}
             </span>
           </div>
         </div>
 
-        {/* The Interactive Photorealistic Canvas */}
-        <div className="relative w-full aspect-video max-h-[520px] bg-black cursor-pointer select-none">
+        {/* The Large Canvas (Almost Fills the Page Height: 74vh) */}
+        <div 
+          ref={containerRef}
+          className="relative w-full h-[74vh] min-h-[560px] max-h-[820px] bg-black cursor-pointer select-none"
+        >
           <canvas ref={canvasRef} className="w-full h-full block" />
 
-          {/* Floating Instruction Banner */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-900/90 border border-zinc-700/80 px-4 py-2 rounded-full text-xs text-zinc-200 shadow-xl flex items-center space-x-2.5 pointer-events-none backdrop-blur-md">
+          {/* Interactive Floating Pill */}
+          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-zinc-900/90 border border-zinc-700/80 px-5 py-2.5 rounded-full text-xs text-zinc-200 shadow-2xl flex items-center space-x-2.5 pointer-events-none backdrop-blur-md">
             <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
             <span>
-              <strong>Click anywhere:</strong> All pixels turn black, then light up in batches from your click!
+              <strong>Click anywhere:</strong> Resets to black and triggers an 80-batch diagonal matrix sweep
             </span>
           </div>
         </div>
 
-        {/* Bottom Control & Status Strip */}
-        <div className="px-5 py-3 bg-zinc-900 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-400">
+        {/* Bottom Interactive Bar */}
+        <div className="px-6 py-3.5 bg-zinc-900 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-400">
           <div className="flex items-center space-x-2 text-zinc-300">
             <Move className="w-3.5 h-3.5 text-amber-400" />
             <span>
-              <strong>Move mouse:</strong> Warps the photorealistic Haussmann facades in real time.
+              <strong>Move cursor:</strong> Warps the photorealistic Haussmann facades with gravitational spring physics.
             </span>
           </div>
 
           <div className="text-[11px] font-mono text-zinc-400">
-            Cluster resolution: 16×16px (~2,400 discrete block batches)
+            Cluster Resolution: 10×10px (~{batchStats.totalTiles.toLocaleString()} micro-voxels) • 80 Diagonal Waves
           </div>
         </div>
       </div>
@@ -410,7 +390,7 @@ export const VirtualWorldsVisual: React.FC = () => {
       {/* ========================================================================= */}
       {/* 3. SCROLL DOWN: THE EXPLANATION OF THE IDEA */}
       {/* ========================================================================= */}
-      <div className="space-y-6 pt-4 border-t border-zinc-200/80">
+      <div className="space-y-6 pt-6 border-t border-zinc-200/80 max-w-4xl mx-auto">
         <div className="max-w-2xl">
           <span className="text-xs font-mono uppercase tracking-wider text-purple-600 font-medium">
             The Concept Explained
@@ -419,7 +399,7 @@ export const VirtualWorldsVisual: React.FC = () => {
             Why the Inception Paris Scene?
           </h3>
           <p className="text-zinc-500 text-sm mt-2 leading-relaxed">
-            In Christopher Nolan’s <em>Inception</em>, the dream architect realizes that physical reality is not static: by sheer intention, she bends the avenues of Paris 90 degrees overhead into the sky, creating an impossible architectural canopy. 
+            In Christopher Nolan’s <em>Inception</em>, the dream architect realizes that in a constructed world, the laws of physics are not fixed: by sheer intention, she bends the avenues of Paris 90 degrees overhead into the sky, creating an impossible architectural canopy. 
             <strong> Virtual Worlds brings that same architectural plasticity to live entertainment.</strong>
           </p>
         </div>
