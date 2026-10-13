@@ -4,8 +4,8 @@ import { ShieldCheck, Cpu, Terminal, EyeOff, Lock, Layers, Zap, Sparkles } from 
 interface NavbarProps {
   currentProject: 'commodities' | 'dropsim' | 'virtualworlds';
   onSelectProject: (p: 'commodities' | 'dropsim' | 'virtualworlds') => void;
-  activeTab: 'simulator' | 'zk-studio' | 'dark-pool' | 'architecture' | 'agent-builder';
-  onSelectTab: (tab: 'simulator' | 'zk-studio' | 'dark-pool' | 'architecture' | 'agent-builder') => void;
+  activeTab: 'visual' | 'simulator' | 'zk-studio' | 'architecture';
+  onSelectTab: (tab: 'visual' | 'simulator' | 'zk-studio' | 'architecture') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -132,17 +132,17 @@ export const Navbar: React.FC<NavbarProps> = ({
         {currentProject === 'commodities' && (
           <nav className="flex space-x-1 overflow-x-auto pb-2 pt-1 border-t border-slate-800/40 text-sm">
             <button
-              onClick={() => onSelectTab('simulator')}
+              onClick={() => onSelectTab('visual')}
               className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg font-medium transition-all whitespace-nowrap ${
-                activeTab === 'simulator'
+                activeTab === 'visual'
                   ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
               }`}
             >
-              <Zap className="w-4 h-4 text-emerald-400" />
-              <span>Live Enclave Simulator</span>
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>System Visual (Buyer ↔ Sandbox ↔ Seller)</span>
               <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.2 rounded font-mono">
-                Interactive
+                CORE VISUAL
               </span>
             </button>
 
@@ -155,19 +155,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <ShieldCheck className="w-4 h-4 text-cyan-400" />
-              <span>ZK Proof Studio (POF & POP)</span>
+              <span>ZK Proof Engine (POF & POP)</span>
             </button>
 
             <button
-              onClick={() => onSelectTab('dark-pool')}
+              onClick={() => onSelectTab('simulator')}
               className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg font-medium transition-all whitespace-nowrap ${
-                activeTab === 'dark-pool'
-                  ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
+                activeTab === 'simulator'
+                  ? 'bg-slate-800 text-indigo-400 border border-slate-700 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
               }`}
             >
-              <EyeOff className="w-4 h-4 text-amber-400" />
-              <span>Blinded Dark Liquidity Book</span>
+              <Zap className="w-4 h-4 text-indigo-400" />
+              <span>Step-by-Step Negotiation Stepper</span>
             </button>
 
             <button
@@ -178,20 +178,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
               }`}
             >
-              <Layers className="w-4 h-4 text-indigo-400" />
-              <span>Protocol Architecture</span>
-            </button>
-
-            <button
-              onClick={() => onSelectTab('agent-builder')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg font-medium transition-all whitespace-nowrap ${
-                activeTab === 'agent-builder'
-                  ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
-            >
-              <Terminal className="w-4 h-4 text-pink-400" />
-              <span>Sovereign Mandate Builder</span>
+              <Layers className="w-4 h-4 text-slate-400" />
+              <span>Security & Threat Model</span>
             </button>
           </nav>
         )}

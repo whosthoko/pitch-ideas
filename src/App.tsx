@@ -1,21 +1,15 @@
 import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
+import { AgenticCommoditiesVisual } from './components/AgenticCommoditiesVisual';
 import { NegotiationSimulator } from './components/NegotiationSimulator';
 import { ZkProofStudio } from './components/ZkProofStudio';
-import { DarkLiquidityMatrix } from './components/DarkLiquidityMatrix';
 import { ArchitectureFlow } from './components/ArchitectureFlow';
-import { AgentMandateBuilder } from './components/AgentMandateBuilder';
 import { ProjectTeasers } from './components/ProjectTeasers';
-import type { BlindedOrder } from './types/commodities';
-import { Shield, Cpu, Lock, Terminal, Globe } from 'lucide-react';
+import { Shield, Cpu, Lock } from 'lucide-react';
 
 export function App() {
   const [currentProject, setCurrentProject] = useState<'commodities' | 'dropsim' | 'virtualworlds'>('commodities');
-  const [activeTab, setActiveTab] = useState<'simulator' | 'zk-studio' | 'dark-pool' | 'architecture' | 'agent-builder'>('simulator');
-
-  const handleSelectOrderForNegotiation = (order: BlindedOrder) => {
-    setActiveTab('simulator');
-  };
+  const [activeTab, setActiveTab] = useState<'visual' | 'simulator' | 'zk-studio' | 'architecture'>('visual');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -31,13 +25,10 @@ export function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {currentProject === 'commodities' ? (
           <div>
-            {activeTab === 'simulator' && <NegotiationSimulator />}
+            {activeTab === 'visual' && <AgenticCommoditiesVisual />}
             {activeTab === 'zk-studio' && <ZkProofStudio />}
-            {activeTab === 'dark-pool' && (
-              <DarkLiquidityMatrix onSelectOrderForNegotiation={handleSelectOrderForNegotiation} />
-            )}
+            {activeTab === 'simulator' && <NegotiationSimulator />}
             {activeTab === 'architecture' && <ArchitectureFlow />}
-            {activeTab === 'agent-builder' && <AgentMandateBuilder />}
           </div>
         ) : (
           <ProjectTeasers
