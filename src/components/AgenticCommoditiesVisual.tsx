@@ -2,22 +2,19 @@ import React, { useState } from 'react';
 import { 
   Building2, 
   Cpu, 
-  ShieldCheck, 
   Lock, 
   Unlock, 
   EyeOff, 
-  Scale, 
   ArrowRight, 
   ArrowLeft,
-  Sparkles,
-  Info,
   Ship,
+  Sparkles,
+  ShieldCheck,
   CheckCircle2,
   FileText
 } from 'lucide-react';
 
 export const AgenticCommoditiesVisual: React.FC = () => {
-  const [activeStage, setActiveStage] = useState<'overview' | 'identities' | 'zk-proofs' | 'negotiation' | 'escrow-unmask'>('overview');
   const [isUnmasked, setIsUnmasked] = useState<boolean>(false);
   const [commodity, setCommodity] = useState<'LNG' | 'Crude' | 'Copper'>('LNG');
 
@@ -38,7 +35,7 @@ export const AgenticCommoditiesVisual: React.FC = () => {
       volume: '600,000 Barrels (Aframax)',
       value: '$47.6M USD',
       collar: '$78.50 - $80.20 / bbl',
-      delivery: 'FOB Sullom Voe (Nov 20-22)',
+      delivery: 'FOB Sullom Voe Terminal (Nov 20-22)',
       buyerName: 'Aura Petroleum Global',
       buyerLocation: 'London, United Kingdom',
       sellerName: 'Statoil Maritime Refineries',
@@ -59,21 +56,22 @@ export const AgenticCommoditiesVisual: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      {/* Intro Header */}
+      {/* Notion-Style Clean Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3 pt-2">
         <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 text-xs border border-zinc-200">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          <span>System Visual Architecture</span>
+          <span>Autonomous Clearing Protocol</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900">
-          How Agentic Commodities Works
+        <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-zinc-900">
+          Agentic Commodities
         </h2>
-        <p className="text-zinc-500 text-sm leading-relaxed">
-          A sovereign buyer and seller interact through an encrypted execution sandbox. Corporate identities and bank records remain shielded, unmasking strictly at contract execution.
+        <p className="text-zinc-500 text-sm sm:text-base leading-relaxed">
+          Autonomous compliance, clearing, and negotiation protocol for private over-the-counter physical trade through sovereign software agents.
         </p>
 
-        {/* Minimalist Commodity Selector */}
-        <div className="pt-2 flex items-center justify-center space-x-1 text-xs">
+        {/* Minimalist Commodity Switcher */}
+        <div className="pt-2 flex items-center justify-center space-x-1.5 text-xs">
+          <span className="text-zinc-400 mr-1">Market:</span>
           {(['LNG', 'Crude', 'Copper'] as const).map((c) => (
             <button
               key={c}
@@ -93,74 +91,12 @@ export const AgenticCommoditiesVisual: React.FC = () => {
         </div>
       </div>
 
-      {/* Notion-Style Stage Pill Navigation */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
-        <button
-          onClick={() => { setActiveStage('overview'); setIsUnmasked(false); }}
-          className={`px-3 py-1.5 rounded-lg transition-all ${
-            activeStage === 'overview'
-              ? 'bg-zinc-900 text-white font-medium'
-              : 'bg-zinc-100/80 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
-          }`}
-        >
-          1. Full Overview
-        </button>
-
-        <button
-          onClick={() => { setActiveStage('identities'); setIsUnmasked(false); }}
-          className={`px-3 py-1.5 rounded-lg transition-all ${
-            activeStage === 'identities'
-              ? 'bg-zinc-900 text-white font-medium'
-              : 'bg-zinc-100/80 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
-          }`}
-        >
-          2. Shielded Identities
-        </button>
-
-        <button
-          onClick={() => { setActiveStage('zk-proofs'); setIsUnmasked(false); }}
-          className={`px-3 py-1.5 rounded-lg transition-all ${
-            activeStage === 'zk-proofs'
-              ? 'bg-zinc-900 text-white font-medium'
-              : 'bg-zinc-100/80 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
-          }`}
-        >
-          3. ZK Proofs (POF & POP)
-        </button>
-
-        <button
-          onClick={() => { setActiveStage('negotiation'); setIsUnmasked(false); }}
-          className={`px-3 py-1.5 rounded-lg transition-all ${
-            activeStage === 'negotiation'
-              ? 'bg-zinc-900 text-white font-medium'
-              : 'bg-zinc-100/80 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
-          }`}
-        >
-          4. Autonomous Negotiation
-        </button>
-
-        <button
-          onClick={() => { setActiveStage('escrow-unmask'); setIsUnmasked(true); }}
-          className={`px-3 py-1.5 rounded-lg transition-all ${
-            activeStage === 'escrow-unmask'
-              ? 'bg-emerald-600 text-white font-medium shadow-xs'
-              : 'bg-emerald-50 text-emerald-800 border border-emerald-200/60 hover:bg-emerald-100/60'
-          }`}
-        >
-          5. Escrow & Unmasking
-        </button>
-      </div>
-
-      {/* 3-Column Minimalist Diagram */}
+      {/* Main 3-Column Visual: Buyer <---> The System <---> Seller */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* ========================================================================= */}
-        {/* LEFT: THE BUYER */}
+        {/* LEFT COLUMN: THE BUYER */}
         {/* ========================================================================= */}
-        <div className={`lg:col-span-4 bg-white rounded-2xl p-5 border transition-all flex flex-col justify-between shadow-xs ${
-          activeStage === 'identities' || activeStage === 'zk-proofs' || activeStage === 'negotiation'
-            ? 'border-blue-300 ring-2 ring-blue-50'
-            : 'border-zinc-200/80'
-        }`}>
+        <div className="lg:col-span-4 bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-xs flex flex-col justify-between">
           <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
@@ -178,45 +114,45 @@ export const AgenticCommoditiesVisual: React.FC = () => {
               </span>
             </div>
 
-            {/* Corporate Identity Shield */}
+            {/* Corporate Identity Card */}
             <div className={`p-3 rounded-xl border text-xs transition-all ${
-              isUnmasked || activeStage === 'escrow-unmask'
+              isUnmasked
                 ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900'
                 : 'bg-zinc-50 border-zinc-200/70 text-zinc-600'
             }`}>
               <div className="flex items-center justify-between mb-1 text-[11px]">
                 <span className="font-medium text-zinc-700 flex items-center space-x-1">
-                  {isUnmasked || activeStage === 'escrow-unmask' ? (
+                  {isUnmasked ? (
                     <Unlock className="w-3 h-3 text-emerald-600" />
                   ) : (
                     <EyeOff className="w-3 h-3 text-zinc-400" />
                   )}
-                  <span>Identity State</span>
+                  <span>Corporate Identity</span>
                 </span>
-                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
-                  isUnmasked || activeStage === 'escrow-unmask'
+                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-medium ${
+                  isUnmasked
                     ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-zinc-200/60 text-zinc-600'
+                    : 'bg-zinc-200/70 text-zinc-600'
                 }`}>
-                  {isUnmasked || activeStage === 'escrow-unmask' ? 'UNMASKED' : 'BLINDED'}
+                  {isUnmasked ? 'UNMASKED' : 'BLINDED'}
                 </span>
               </div>
 
-              {isUnmasked || activeStage === 'escrow-unmask' ? (
+              {isUnmasked ? (
                 <div className="space-y-0.5 text-zinc-800 mt-1.5">
                   <div className="font-semibold text-zinc-900">{commoditySpecs.buyerName}</div>
                   <div className="text-[11px] text-zinc-500">{commoditySpecs.buyerLocation}</div>
-                  <div className="text-[10px] text-emerald-700">✓ Bank escrow verified</div>
+                  <div className="text-[10px] text-emerald-700 font-medium">✓ Bank escrow confirmed</div>
                 </div>
               ) : (
                 <div className="text-zinc-600 mt-1">
                   <div className="font-mono font-medium text-zinc-900">0x7F2e...4C91</div>
-                  <div className="text-[11px] text-zinc-500">Corporate identity & bank coords shielded</div>
+                  <div className="text-[11px] text-zinc-500">Identity & banking coordinates veiled</div>
                 </div>
               )}
             </div>
 
-            {/* What Buyer Keeps Private */}
+            {/* Private Vault */}
             <div className="bg-[#FAFAFA] border border-zinc-200/60 rounded-xl p-3 text-xs space-y-1.5">
               <div className="text-[11px] font-medium text-zinc-500 flex items-center space-x-1">
                 <Lock className="w-3 h-3 text-zinc-400" />
@@ -225,17 +161,17 @@ export const AgenticCommoditiesVisual: React.FC = () => {
               <ul className="text-[11px] text-zinc-600 space-y-1 pl-1">
                 <li className="flex items-center space-x-1.5">
                   <span className="w-1 h-1 rounded-full bg-zinc-400" />
-                  <span>Bank accounts & credit facility limits</span>
+                  <span>Bank account records & SWIFT coords</span>
                 </li>
                 <li className="flex items-center space-x-1.5">
                   <span className="w-1 h-1 rounded-full bg-zinc-400" />
-                  <span>Internal treasury balance sheets</span>
+                  <span>Commercial balance sheet & credit lines</span>
                 </li>
               </ul>
             </div>
 
-            {/* Sovereign Software Agent */}
-            <div className="bg-zinc-50/60 border border-zinc-200 rounded-xl p-3 text-xs space-y-1.5">
+            {/* Delegated Sovereign Agent */}
+            <div className="bg-zinc-50/70 border border-zinc-200 rounded-xl p-3 text-xs space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-zinc-900 flex items-center space-x-1.5">
                   <Cpu className="w-3.5 h-3.5 text-zinc-600" />
@@ -246,9 +182,9 @@ export const AgenticCommoditiesVisual: React.FC = () => {
                 </span>
               </div>
               <div className="text-[11px] text-zinc-600 space-y-0.5 pt-0.5">
-                <div>• Volume: <span className="font-medium text-zinc-900">{commoditySpecs.volume}</span></div>
-                <div>• Price Ceiling: <span className="font-medium text-zinc-900">{commoditySpecs.collar.split('-')[1]?.trim()}</span></div>
-                <div>• Passes: <span className="font-mono text-zinc-800 bg-zinc-200/50 px-1 rounded">ZK-POF (Proof of Funds)</span></div>
+                <div>• Needed: <span className="font-medium text-zinc-900">{commoditySpecs.volume}</span></div>
+                <div>• Price Collar: <span className="font-medium text-zinc-900">Max {commoditySpecs.collar.split('-')[1]?.trim()}</span></div>
+                <div>• Proof: <span className="font-mono text-zinc-800 bg-zinc-200/60 px-1 rounded">ZK-POF (Capital Capacity)</span></div>
               </div>
             </div>
           </div>
@@ -260,22 +196,18 @@ export const AgenticCommoditiesVisual: React.FC = () => {
         </div>
 
         {/* ========================================================================= */}
-        {/* CENTER: THE AGENTIC COMMODITIES SYSTEM */}
+        {/* CENTER COLUMN: THE SYSTEM (Encrypted Sandbox Protocol) */}
         {/* ========================================================================= */}
-        <div className={`lg:col-span-4 bg-white rounded-2xl p-5 border transition-all flex flex-col justify-between shadow-sm relative ${
-          activeStage === 'overview'
-            ? 'border-zinc-300 ring-2 ring-zinc-100'
-            : 'border-zinc-200'
-        }`}>
+        <div className="lg:col-span-4 bg-white rounded-2xl p-5 border border-zinc-300 shadow-sm flex flex-col justify-between relative">
           <div>
-            {/* Header */}
-            <div className="text-center pb-3 border-b border-zinc-100 mb-4">
+            {/* System Title */}
+            <div className="text-center pb-3 border-b border-zinc-100 mb-3.5">
               <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 text-[11px] font-medium mb-1">
                 <Cpu className="w-3 h-3 text-zinc-600" />
                 <span>Encrypted Execution Sandbox</span>
               </div>
               <h3 className="text-base font-semibold text-zinc-900">
-                Agentic Commodities Protocol
+                The Clearing Protocol
               </h3>
               <p className="text-[11px] text-zinc-500 mt-0.5">
                 Hardware-isolated enclave handling 5 automated operations:
@@ -283,115 +215,87 @@ export const AgenticCommoditiesVisual: React.FC = () => {
             </div>
 
             {/* The 5 Automated Operations */}
-            <div className="space-y-2.5 text-xs">
-              {/* 1. Blinded Identities */}
-              <div className={`p-2.5 rounded-xl border transition-all ${
-                activeStage === 'identities'
-                  ? 'bg-zinc-50 border-zinc-400 font-medium'
-                  : 'bg-white border-zinc-200/70'
-              }`}>
-                <div className="flex items-start space-x-2.5">
-                  <div className="w-6 h-6 rounded-md bg-zinc-100 flex items-center justify-center shrink-0 mt-0.5 text-zinc-700 font-mono text-[11px]">
-                    1
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-zinc-900">Blinded Identities</div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">
-                      Veils corporate entities and coordinates during discovery and negotiation.
-                    </div>
-                  </div>
+            <div className="space-y-2 text-xs">
+              <div className="p-2.5 rounded-xl border border-zinc-200/70 bg-[#FAFAFA] flex items-start space-x-2.5">
+                <span className="w-5 h-5 rounded-md bg-zinc-200/60 text-zinc-700 font-mono text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                  1
+                </span>
+                <div>
+                  <div className="font-medium text-zinc-900 text-xs">Blinded Identities</div>
+                  <div className="text-[11px] text-zinc-500">Corporate identities veiled during discovery & bidding.</div>
                 </div>
               </div>
 
-              {/* 2. ZK Verifier */}
-              <div className={`p-2.5 rounded-xl border transition-all ${
-                activeStage === 'zk-proofs'
-                  ? 'bg-zinc-50 border-zinc-400 font-medium'
-                  : 'bg-white border-zinc-200/70'
-              }`}>
-                <div className="flex items-start space-x-2.5">
-                  <div className="w-6 h-6 rounded-md bg-zinc-100 flex items-center justify-center shrink-0 mt-0.5 text-zinc-700 font-mono text-[11px]">
-                    2
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-zinc-900">Zero-Knowledge Verifier</div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">
-                      Verifies capital capacity (POF) & physical cargo (POP) with 0% data exposure.
-                    </div>
-                  </div>
+              <div className="p-2.5 rounded-xl border border-zinc-200/70 bg-[#FAFAFA] flex items-start space-x-2.5">
+                <span className="w-5 h-5 rounded-md bg-zinc-200/60 text-zinc-700 font-mono text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                  2
+                </span>
+                <div>
+                  <div className="font-medium text-zinc-900 text-xs">Zero-Knowledge Verifier</div>
+                  <div className="text-[11px] text-zinc-500">Verifies capital (POF) & cargo (POP) with 0% data leakage.</div>
                 </div>
               </div>
 
-              {/* 3. Autonomous Negotiation */}
-              <div className={`p-2.5 rounded-xl border transition-all ${
-                activeStage === 'negotiation'
-                  ? 'bg-zinc-50 border-zinc-400 font-medium'
-                  : 'bg-white border-zinc-200/70'
-              }`}>
-                <div className="flex items-start space-x-2.5">
-                  <div className="w-6 h-6 rounded-md bg-zinc-100 flex items-center justify-center shrink-0 mt-0.5 text-zinc-700 font-mono text-[11px]">
-                    3
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-zinc-900">Collar & Term Negotiation</div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">
-                      Agents negotiate price collars ({commoditySpecs.collar}) & laycan schedules autonomously.
-                    </div>
-                  </div>
+              <div className="p-2.5 rounded-xl border border-zinc-200/70 bg-[#FAFAFA] flex items-start space-x-2.5">
+                <span className="w-5 h-5 rounded-md bg-zinc-200/60 text-zinc-700 font-mono text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                  3
+                </span>
+                <div>
+                  <div className="font-medium text-zinc-900 text-xs">Autonomous Negotiation</div>
+                  <div className="text-[11px] text-zinc-500">Software agents negotiate price collars & delivery dates.</div>
                 </div>
               </div>
 
-              {/* 4 & 5. Escrow & Unmasking */}
-              <div className={`p-2.5 rounded-xl border transition-all ${
-                activeStage === 'escrow-unmask' || isUnmasked
-                  ? 'bg-emerald-50/60 border-emerald-300 font-medium'
-                  : 'bg-white border-zinc-200/70'
+              <div className="p-2.5 rounded-xl border border-zinc-200/70 bg-[#FAFAFA] flex items-start space-x-2.5">
+                <span className="w-5 h-5 rounded-md bg-zinc-200/60 text-zinc-700 font-mono text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                  4
+                </span>
+                <div>
+                  <div className="font-medium text-zinc-900 text-xs">Programmatic Escrow</div>
+                  <div className="text-[11px] text-zinc-500">Multi-sig contract holds funds and cargo title simultaneously.</div>
+                </div>
+              </div>
+
+              <div className={`p-2.5 rounded-xl border transition-all flex items-start space-x-2.5 ${
+                isUnmasked
+                  ? 'bg-emerald-50/70 border-emerald-300'
+                  : 'bg-[#FAFAFA] border-zinc-200/70'
               }`}>
-                <div className="flex items-start space-x-2.5">
-                  <div className="w-6 h-6 rounded-md bg-zinc-100 flex items-center justify-center shrink-0 mt-0.5 text-zinc-700 font-mono text-[11px]">
-                    4-5
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-zinc-900">Escrow Lock & Strict Unmasking</div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">
-                      Programmatic escrow locks funds & title. Blinders drop <strong className="text-zinc-800">strictly at execution</strong>.
-                    </div>
-                  </div>
+                <span className={`w-5 h-5 rounded-md font-mono text-[11px] flex items-center justify-center shrink-0 mt-0.5 ${
+                  isUnmasked ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-zinc-200/60 text-zinc-700'
+                }`}>
+                  5
+                </span>
+                <div>
+                  <div className="font-medium text-zinc-900 text-xs">Strict Execution Unmasking</div>
+                  <div className="text-[11px] text-zinc-500">Blinders unmask <strong className="text-zinc-800">strictly at the point of contract lock</strong>.</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Minimalist Action Button */}
-          <div className="pt-3 border-t border-zinc-100 flex items-center justify-between mt-4">
+          {/* Interactive Trigger Button */}
+          <div className="pt-3 border-t border-zinc-100 flex items-center justify-between mt-3">
             <span className="text-[11px] text-zinc-500">
               Value: <strong className="text-zinc-800">{commoditySpecs.value}</strong>
             </span>
             <button
-              onClick={() => {
-                setIsUnmasked(!isUnmasked);
-                if (!isUnmasked) setActiveStage('escrow-unmask');
-                else setActiveStage('overview');
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                isUnmasked || activeStage === 'escrow-unmask'
-                  ? 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-                  : 'bg-zinc-900 text-white hover:bg-zinc-800 shadow-xs'
+              onClick={() => setIsUnmasked(!isUnmasked)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shadow-xs ${
+                isUnmasked
+                  ? 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 border border-zinc-200'
+                  : 'bg-zinc-900 text-white hover:bg-zinc-800'
               }`}
             >
-              {isUnmasked || activeStage === 'escrow-unmask' ? 'Re-Shield Blinders' : 'Simulate Unmasking'}
+              {isUnmasked ? 'Re-Shield Blinders' : 'Simulate Escrow Unmasking'}
             </button>
           </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* RIGHT: THE SELLER */}
+        {/* RIGHT COLUMN: THE SELLER */}
         {/* ========================================================================= */}
-        <div className={`lg:col-span-4 bg-white rounded-2xl p-5 border transition-all flex flex-col justify-between shadow-xs ${
-          activeStage === 'identities' || activeStage === 'zk-proofs' || activeStage === 'negotiation'
-            ? 'border-emerald-300 ring-2 ring-emerald-50'
-            : 'border-zinc-200/80'
-        }`}>
+        <div className="lg:col-span-4 bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-xs flex flex-col justify-between">
           <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
@@ -409,35 +313,35 @@ export const AgenticCommoditiesVisual: React.FC = () => {
               </span>
             </div>
 
-            {/* Corporate Identity Shield */}
+            {/* Corporate Identity Card */}
             <div className={`p-3 rounded-xl border text-xs transition-all ${
-              isUnmasked || activeStage === 'escrow-unmask'
+              isUnmasked
                 ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900'
                 : 'bg-zinc-50 border-zinc-200/70 text-zinc-600'
             }`}>
               <div className="flex items-center justify-between mb-1 text-[11px]">
                 <span className="font-medium text-zinc-700 flex items-center space-x-1">
-                  {isUnmasked || activeStage === 'escrow-unmask' ? (
+                  {isUnmasked ? (
                     <Unlock className="w-3 h-3 text-emerald-600" />
                   ) : (
                     <EyeOff className="w-3 h-3 text-zinc-400" />
                   )}
                   <span>Identity State</span>
                 </span>
-                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
-                  isUnmasked || activeStage === 'escrow-unmask'
+                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-medium ${
+                  isUnmasked
                     ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-zinc-200/60 text-zinc-600'
+                    : 'bg-zinc-200/70 text-zinc-600'
                 }`}>
-                  {isUnmasked || activeStage === 'escrow-unmask' ? 'UNMASKED' : 'BLINDED'}
+                  {isUnmasked ? 'UNMASKED' : 'BLINDED'}
                 </span>
               </div>
 
-              {isUnmasked || activeStage === 'escrow-unmask' ? (
+              {isUnmasked ? (
                 <div className="space-y-0.5 text-zinc-800 mt-1.5">
                   <div className="font-semibold text-zinc-900">{commoditySpecs.sellerName}</div>
                   <div className="text-[11px] text-zinc-500">{commoditySpecs.sellerLocation}</div>
-                  <div className="text-[10px] text-emerald-700">✓ SGS quality assay verified</div>
+                  <div className="text-[10px] text-emerald-700 font-medium">✓ SGS assay certificate verified</div>
                 </div>
               ) : (
                 <div className="text-zinc-600 mt-1">
@@ -447,7 +351,7 @@ export const AgenticCommoditiesVisual: React.FC = () => {
               )}
             </div>
 
-            {/* What Seller Keeps Private */}
+            {/* Private Vault */}
             <div className="bg-[#FAFAFA] border border-zinc-200/60 rounded-xl p-3 text-xs space-y-1.5">
               <div className="text-[11px] font-medium text-zinc-500 flex items-center space-x-1">
                 <Lock className="w-3 h-3 text-zinc-400" />
@@ -460,13 +364,13 @@ export const AgenticCommoditiesVisual: React.FC = () => {
                 </li>
                 <li className="flex items-center space-x-1.5">
                   <span className="w-1 h-1 rounded-full bg-zinc-400" />
-                  <span>Cost basis margins & vessel tracking</span>
+                  <span>Cost basis margins & vessel manifests</span>
                 </li>
               </ul>
             </div>
 
-            {/* Sovereign Software Agent */}
-            <div className="bg-zinc-50/60 border border-zinc-200 rounded-xl p-3 text-xs space-y-1.5">
+            {/* Delegated Sovereign Agent */}
+            <div className="bg-zinc-50/70 border border-zinc-200 rounded-xl p-3 text-xs space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-zinc-900 flex items-center space-x-1.5">
                   <Cpu className="w-3.5 h-3.5 text-zinc-600" />
@@ -478,8 +382,8 @@ export const AgenticCommoditiesVisual: React.FC = () => {
               </div>
               <div className="text-[11px] text-zinc-600 space-y-0.5 pt-0.5">
                 <div>• Allocated: <span className="font-medium text-zinc-900">{commoditySpecs.volume}</span></div>
-                <div>• Price Floor: <span className="font-medium text-zinc-900">{commoditySpecs.collar.split('-')[0]?.trim()}</span></div>
-                <div>• Passes: <span className="font-mono text-zinc-800 bg-zinc-200/50 px-1 rounded">ZK-POP (Physical Title)</span></div>
+                <div>• Price Collar: <span className="font-medium text-zinc-900">Min {commoditySpecs.collar.split('-')[0]?.trim()}</span></div>
+                <div>• Proof: <span className="font-mono text-zinc-800 bg-zinc-200/60 px-1 rounded">ZK-POP (Physical Title)</span></div>
               </div>
             </div>
           </div>
@@ -491,31 +395,37 @@ export const AgenticCommoditiesVisual: React.FC = () => {
         </div>
       </div>
 
-      {/* Notion-Style Clean Detail Callout */}
-      <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 sm:p-6 text-xs sm:text-sm text-zinc-600 shadow-xs space-y-2">
-        <div className="flex items-center space-x-2 text-zinc-900 font-medium">
-          <Info className="w-4 h-4 text-zinc-500" />
-          <span>
-            {activeStage === 'overview' && 'Protocol Mechanics'}
-            {activeStage === 'identities' && 'Zero Identity Disclosure Principle'}
-            {activeStage === 'zk-proofs' && 'Mathematical Verification without Data Leakage'}
-            {activeStage === 'negotiation' && 'Autonomous Algorithmic Bidding'}
-            {activeStage === 'escrow-unmask' && 'Point-of-Execution Escrow & Legal Unmasking'}
-          </span>
+      {/* 3 Simple Consolidated Insight Cards (Notion-Style) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <div className="bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-xs space-y-1.5">
+          <div className="text-xs font-semibold text-zinc-900 flex items-center space-x-1.5">
+            <EyeOff className="w-3.5 h-3.5 text-zinc-500" />
+            <span>1. Zero Identity Disclosure</span>
+          </div>
+          <p className="text-xs text-zinc-500 leading-relaxed">
+            Corporate identities, banking coordinates, and vessel manifests remain permanently shielded throughout discovery and negotiation, preventing market front-running.
+          </p>
         </div>
 
-        <p className="leading-relaxed text-zinc-500 pl-6">
-          {activeStage === 'overview' &&
-            'The buyer and seller deploy sovereign agents into the central enclave. The protocol verifies financial solvency and physical cargo allocations without exposing balance sheets or contracts, allowing agents to negotiate price collars and lock into escrow before unmasking.'}
-          {activeStage === 'identities' &&
-            'Traditional commodity desks suffer from front-running whenever large volumes enter the market. Blinded cryptographic identities ensure neither human brokers nor algorithms know who is trading until final execution.'}
-          {activeStage === 'zk-proofs' &&
-            'Zero-knowledge proofs (zk-SNARKs) mathematically prove that the buyer has sufficient capital capacity (POF) and the seller holds legal title to the cargo (POP) with 100% mathematical certainty and zero data leakage.'}
-          {activeStage === 'negotiation' &&
-            'Software agents autonomously exchange offers within mandated price collars and delivery schedules, converging on fair settlement without human emotional friction or market signaling.'}
-          {activeStage === 'escrow-unmask' &&
-            'When consensus is reached, funds lock into multi-sig escrow and physical cargo title is sealed. Blinders fall away strictly at this moment, producing binding legal contracts with verified counterparties.'}
-        </p>
+        <div className="bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-xs space-y-1.5">
+          <div className="text-xs font-semibold text-zinc-900 flex items-center space-x-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
+            <span>2. Zero-Knowledge Proofs</span>
+          </div>
+          <p className="text-xs text-zinc-500 leading-relaxed">
+            ZK-POF mathematically verifies buyer capital capacity, while ZK-POP verifies seller physical allocations without exposing bank records, supplier contracts, or balance sheets.
+          </p>
+        </div>
+
+        <div className="bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-xs space-y-1.5">
+          <div className="text-xs font-semibold text-zinc-900 flex items-center space-x-1.5">
+            <Lock className="w-3.5 h-3.5 text-zinc-500" />
+            <span>3. Escrow & Strict Unmasking</span>
+          </div>
+          <p className="text-xs text-zinc-500 leading-relaxed">
+            When software agents reach consensus on deal terms, binding legal terms lock into programmatic escrow, unmasking corporate entities strictly at execution.
+          </p>
+        </div>
       </div>
     </div>
   );
