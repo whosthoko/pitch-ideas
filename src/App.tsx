@@ -16,7 +16,7 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main className={`flex-1 w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 ${currentProject === 'virtualworlds' ? 'max-w-[1440px]' : 'max-w-5xl'}`}>
+      <main className={currentProject === 'virtualworlds' ? 'flex-1 w-full p-0' : 'flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8'}>
         {currentProject === 'commodities' && <AgenticCommoditiesVisual />}
         {currentProject === 'dropsim' && <DropSimVisual />}
         {currentProject === 'virtualworlds' && <VirtualWorldsVisual />}
